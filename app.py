@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from openai import OpenAI
+from openai import RateLimitError, APIError
 
 # Set page config
 st.set_page_config(page_title="Non-Fiction Rewriter", layout="centered")
@@ -44,18 +45,25 @@ if st.button("✍️ Rewrite into polished paragraph"):
         st.warning("Please enter some text.")
     else:
         with st.spinner("Rewriting..."):
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": custom_prompt},
-                    {"role": "user", "content": input_text}
-                ],
-                temperature=0.7
-            )
-            rewritten = response.choices[0].message.content
-            st.session_state.latest = rewritten
-            st.success("Here's your rewritten paragraph:")
-            st.write(rewritten)
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": custom_prompt},
+                        {"role": "user", "content": input_text}
+                    ],
+                    temperature=0.7
+                )
+                rewritten = response.choices[0].message.content
+                st.session_state.latest = rewritten
+                st.success("Here's your rewritten paragraph:")
+                st.write(rewritten)
+            except RateLimitError:
+                st.error("🚫 Rate limit reached. Please wait a moment and try again.")
+            except APIError as e:
+                st.error(f"⚠️ OpenAI API error: {str(e)}")
+            except Exception as e:
+                st.error(f"❌ Unexpected error: {str(e)}")
 
 # Save title, keywords
 if "latest" in st.session_state:
