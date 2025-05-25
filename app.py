@@ -1,13 +1,12 @@
-from openai import OpenAI
-
 import streamlit as st
 import pandas as pd
+from openai import OpenAI
 
 # Set page config
 st.set_page_config(page_title="Non-Fiction Rewriter", layout="centered")
 
-# Set OpenAI API key
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# Initialize OpenAI client
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.title("📘 Non-Fiction Paragraph Rewriter")
 
@@ -15,7 +14,28 @@ st.title("📘 Non-Fiction Paragraph Rewriter")
 if "entries" not in st.session_state:
     st.session_state.entries = []
 
+# Prompt choices
+st.subheader("Step 1: Choose Rewrite Style")
+prompt_option = st.radio(
+    "Select how you'd like the assistant to rewrite your text:",
+    [
+        "1) Interpret meaning + expand using online patterns (Default)",
+        "2) Improve coherence and grammar",
+        "3) Custom prompt"
+    ]
+)
+
+if prompt_option.startswith("3"):
+    custom_prompt = st.text_area("Enter your custom prompt", value="Improve the text by first interpreting its meaning, extrapolating its fuller intent, then expanding the depth of thought and argument through similar thoughts online and then drafting an article on the topic. Ensure there is no plagiarism in the exact text used.", height=150)
+else:
+    custom_prompt = (
+        "Improve the text by first interpreting its meaning, extrapolating its fuller intent, then expanding the depth of thought and argument through similar thoughts online and then drafting an article on the topic. Ensure there is no plagiarism in the exact text used."
+        if prompt_option.startswith("1") else
+        "Improve the text by redeveloping it for more coherent thought flow and impeccable style and grammar."
+    )
+
 # Input text box
+st.subheader("Step 2: Paste Your Draft")
 input_text = st.text_area("Write your messy draft here", height=200)
 
 # Rewrite logic
@@ -24,17 +44,15 @@ if st.button("✍️ Rewrite into polished paragraph"):
         st.warning("Please enter some text.")
     else:
         with st.spinner("Rewriting..."):
-            client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
             response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "You rewrite messy, half-finished notes into clean, structured non-fiction prose. Expand on ideas and improve clarity."},
+                    {"role": "system", "content": custom_prompt},
                     {"role": "user", "content": input_text}
                 ],
                 temperature=0.7
             )
             rewritten = response.choices[0].message.content
-
             st.session_state.latest = rewritten
             st.success("Here's your rewritten paragraph:")
             st.write(rewritten)
@@ -64,3 +82,4 @@ if st.session_state.entries:
     df = pd.DataFrame(st.session_state.entries)
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Download All as CSV", data=csv, file_name="rewritten_paragraphs.csv", mime="text/csv")
+
