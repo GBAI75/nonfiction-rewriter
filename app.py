@@ -26,12 +26,15 @@ prompt_option = st.radio(
     ]
 )
 
+base_prompt = (
+    "Improve the text by first interpreting its meaning, extrapolating its fuller intent, then expanding the depth of thought and argument through similar thoughts found in an online search you can run and then drafting a section of a chapter in a book about listening to other perspectives and to nuances in our search toward common grounds to accelerate solutions to the climate crisis. Draft as if you are the author of the book. Ensure there is no plagiarism in the exact text used if you find arguments and statement online. Ok to use quotes if they are properly referenced to original author and great to quote facts but put footnotes to references."
+)
+
 if prompt_option.startswith("3"):
-    custom_prompt = st.text_area("Enter your custom prompt", value="Improve the text by first interpreting its meaning, extrapolating its fuller intent, then expanding the depth of thought and argument through similar thoughts online and then drafting an article on the topic. Ensure there is no plagiarism in the exact text used.", height=150)
+    custom_prompt = st.text_area("Enter your custom prompt", value=base_prompt, height=200)
 else:
     custom_prompt = (
-        "Improve the text by first interpreting its meaning, extrapolating its fuller intent, then expanding the depth of thought and argument through similar thoughts online and then drafting an article on the topic. Ensure there is no plagiarism in the exact text used."
-        if prompt_option.startswith("1") else
+        base_prompt if prompt_option.startswith("1") else
         "Improve the text by redeveloping it for more coherent thought flow and impeccable style and grammar."
     )
 
@@ -47,7 +50,7 @@ if st.button("✍️ Rewrite into polished paragraph"):
         with st.spinner("Rewriting..."):
             try:
                 response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                    model="gpt-4",
                     messages=[
                         {"role": "system", "content": custom_prompt},
                         {"role": "user", "content": input_text}
@@ -90,4 +93,3 @@ if st.session_state.entries:
     df = pd.DataFrame(st.session_state.entries)
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Download All as CSV", data=csv, file_name="rewritten_paragraphs.csv", mime="text/csv")
-
