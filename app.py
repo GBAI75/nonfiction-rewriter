@@ -45,7 +45,7 @@ if st.button("✍️ Rewrite into polished paragraph"):
     else:
         with st.spinner("Rewriting..."):
             response = client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": custom_prompt},
                     {"role": "user", "content": input_text}
