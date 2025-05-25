@@ -1,5 +1,6 @@
+from openai import OpenAI
+
 import streamlit as st
-import openai
 import pandas as pd
 
 # Set page config
@@ -23,7 +24,8 @@ if st.button("✍️ Rewrite into polished paragraph"):
         st.warning("Please enter some text.")
     else:
         with st.spinner("Rewriting..."):
-            response = openai.ChatCompletion.create(
+            client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+            response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": "You rewrite messy, half-finished notes into clean, structured non-fiction prose. Expand on ideas and improve clarity."},
@@ -31,7 +33,8 @@ if st.button("✍️ Rewrite into polished paragraph"):
                 ],
                 temperature=0.7
             )
-            rewritten = response['choices'][0]['message']['content']
+            rewritten = response.choices[0].message.content
+
             st.session_state.latest = rewritten
             st.success("Here's your rewritten paragraph:")
             st.write(rewritten)
