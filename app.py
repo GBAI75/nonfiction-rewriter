@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 from openai import OpenAI
 from openai import RateLimitError, APIError
+from io import BytesIO
+from docx import Document
+from docx.shared import Pt
 
 # Set page config
 st.set_page_config(page_title="Non-Fiction Rewriter", layout="centered")
@@ -35,12 +38,17 @@ if prompt_option.startswith("3"):
 else:
     custom_prompt = (
         base_prompt if prompt_option.startswith("1") else
-        "Improve the text by first interpreting its meaning, extrapolating its fuller intent, then expanding the depth of thought and argument through similar thoughts found in an online search you can run and then drafting a section of a chapter in a book about listening to other perspectives and to nuances in our search toward common grounds to accelerate solutions to the climate crisis. Draft as if you are the author of the book . Ensure there is no plagiarism in the exact text used if you find arguments and statement online. Ok to use quotes if they are properly referenced to original author and great to quote facts but put footnotes to references."
+        "Improve the text by redeveloping it for more coherent thought flow and impeccable style and grammar."
     )
 
-# Input text box
-st.subheader("Step 2: Paste Your Draft")
-input_text = st.text_area("Write your messy draft here", height=200)
+# Input text box or voice input
+st.subheader("Step 2: Input Your Draft")
+input_mode = st.radio("Choose input method:", ["Type", "Dictate (speech-to-text)"])
+
+if input_mode == "Type":
+    input_text = st.text_area("Write your messy draft here", height=200)
+else:
+    input_text = st.text_area("Speak and paste your dictation here (voice input capture not supported directly in Streamlit yet)", height=200)
 
 # Rewrite logic
 if st.button("✍️ Rewrite into polished paragraph"):
@@ -89,8 +97,29 @@ if st.session_state.entries:
     for i, entry in enumerate(st.session_state.entries):
         st.markdown(f"**{i+1}. {entry['title']}**  \n*Keywords:* {entry['keywords']}  \n\n{entry['paragraph']}")
 
-    # Download button
-    df = pd.DataFrame(st.session_state.entries)
-    csv = df.to_csv(index=False).encode("utf-8")
-    st.download_button("📥 Download All as CSV", data=csv, file_name="rewritten_paragraphs.csv", mime="text/csv")
+    # Word document export
+    def generate_docx(entries):
+        doc = Document()
+        for entry in entries:
+            doc.add_heading(entry['title'], level=1)
+            p = doc.add_paragraph()
+            run = p.add_run("Keywords: ")
+            run.bold = True
+            run.font.size = Pt(10)
+            run2 = p.add_run(entry['keywords'])
+            run2.font.size = Pt(10)
+            doc.add_paragraph(entry['paragraph'])
+            doc.add_paragraph("\n")
+        buffer = BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        return buffer
+
+    docx_buffer = generate_docx(st.session_state.entries)
+    st.download_button(
+        "📄 Download All as Word Document",
+        data=docx_buffer,
+        file_name="rewritten_paragraphs.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
 
