@@ -35,7 +35,7 @@ if prompt_option.startswith("3"):
 else:
     custom_prompt = (
         base_prompt if prompt_option.startswith("1") else
-        "Improve the text by redeveloping it for more coherent thought flow and impeccable style and grammar."
+        "Improve the text by first interpreting its meaning, extrapolating its fuller intent, then expanding the depth of thought and argument through similar thoughts found in an online search you can run and then drafting a section of a chapter in a book about listening to other perspectives and to nuances in our search toward common grounds to accelerate solutions to the climate crisis. Draft as if you are the author of the book . Ensure there is no plagiarism in the exact text used if you find arguments and statement online. Ok to use quotes if they are properly referenced to original author and great to quote facts but put footnotes to references."
     )
 
 # Input text box
@@ -93,3 +93,4 @@ if st.session_state.entries:
     df = pd.DataFrame(st.session_state.entries)
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button("📥 Download All as CSV", data=csv, file_name="rewritten_paragraphs.csv", mime="text/csv")
+
